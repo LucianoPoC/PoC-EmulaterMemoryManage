@@ -8,23 +8,20 @@ public class List {
         this.memorySize = memorySize;
     }
 
-    public void aloca(long value) {
-        Node node = this.firstFit(value);
-        node.setNext(this.root);
-        if (this.root != null) {
-            this.root.setPrevious(node);
-        }
-        this.root = node;
-        this.memorySize -= value;
+    public long aloca(long value) {
+        return firstFit(value);
     }
 
-    public void desaloca(int processNumber) {
+    public void desaloca(long pointer) {
         Node node = this.root;
         Node ant = null;
 
-        while ((node != null) && (node.getPonteiro() != processNumber)) {
+        while ((node != null) && (node.getPointer() != pointer)) {
             ant = node;
             node = node.getNext();
+            if (ant.getState() == 'H' && node.getState() == 'H') {
+                this.mergeHole(ant, node);
+            }
         }
 
         if (node == null) {
@@ -33,6 +30,12 @@ public class List {
 
         node.setState('H');
         this.memorySize += node.getValue();
+    }
+
+    private void mergeHole(Node node1, Node node2) {
+        node2.setValue(node1.getValue() + node2.getValue());
+        node1.getPrevious().setNext(node2);
+        node2.setPrevious(node1.getPrevious());
     }
 
     public String getMemorySize() {
@@ -45,37 +48,92 @@ public class List {
             if (value <= node.getValue() && node.getState() == 'H') {
                 return node;
             }
+            node = node.getNext();
         }
         return null;
     }
-    private Node firstFit(long value) {
-        Node nodeHole = getFirsHoleNode(value);
-        if (nodeHole == null) {
-            //Testar se ainda existe memoria, se existir coloca na lista
-        } else {
-            Node newNode = new Node(value);
 
-            newNode.setNext(nodeHole);
-            nodeHole.getPrevious().setNext(newNode);
-            newNode.setPrevious(nodeHole.getPrevious());
-            nodeHole.setPrevious(newNode);
-
-            //Trocar valor de nodeHole
-        }
-
+    private long getHolesSize() {
+        long count = 0;
         Node node = this.root;
-        Node ant = null;
-
-        while ((node != null) && (node.getPonteiro() != processNumber)) {
-            ant = node;
+        while (node != null) {
+            if (node.getState() == 'H') {
+                count += node.getValue();
+            }
             node = node.getNext();
         }
 
-        if (node == null) {
-            return;
+        return count;
+    }
+
+    private long firstFit(long value) {
+        long pointer = -1;
+        Node newNode = new Node(value);
+        Node nodeHole = getFirsHoleNode(value);
+        if (nodeHole == null) {
+            pointer = simpleInsert(value, newNode);
+        } else {
+            newNode.setNext(nodeHole);
+            if (nodeHole.getPrevious() != null) {
+                nodeHole.getPrevious().setNext(newNode);
+            }
+            newNode.setPrevious(nodeHole.getPrevious());
+            nodeHole.setPrevious(newNode);
+            pointer = nodeHole.getPointer();
+            if ((nodeHole.getValue() - value) > 0) {
+                nodeHole.setValue(nodeHole.getValue() - value);
+                nodeHole.setPointer(pointer-value);
+            } else {
+                this.removeNode(nodeHole);
+            }
+
+            if (nodeHole == this.root) {
+                this.root = newNode;
+            }
+            this.memorySize -= value;
         }
 
-        node.setState('H');
-        this.memorySize += node.getValue();
+        newNode.setPointer(pointer);
+
+        return pointer;
+    }
+
+    private void removeNode(Node nodeHole) {
+        nodeHole.getNext().setPrevious(nodeHole.getPrevious());
+        nodeHole.getPrevious().setNext(nodeHole.getNext());
+        nodeHole.setNext(null);
+        nodeHole.setPrevious(null);
+    }
+
+    private long simpleInsert(long value, Node newNode) {
+        long pointer = -1;
+        try {
+            if ((this.memorySize - getHolesSize()) >= value) {
+                if (this.root != null) {
+                    this.root.setPrevious(newNode);
+                }
+                newNode.setNext(this.root);
+                pointer = this.memorySize;
+                this.root = newNode;
+                this.memorySize -= value;
+            } else {
+                System.out.println("Espaço de memória requerido é maior do que o maior espaço disponível!");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        return pointer;
+    }
+
+    @Override
+    public String toString() {
+        Node node = this.root;
+        String sReturn = "Lista {\n";
+        while (node != null) {
+            sReturn += "Memory size: "+node.getValue()+"bytes State: "+node.getState()+" Pointer: "+node.getPointer()+", \n";
+            node = node.getNext();
+        }
+        return sReturn+"}";
     }
 }

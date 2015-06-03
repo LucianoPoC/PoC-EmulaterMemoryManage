@@ -3,12 +3,13 @@ package br.edu.ifc.blumenau.list;
 public class Node {
     private long value;
     private char state;
-    private int ponteiro;
+    private long pointer;
     private Node next;
     private Node previous;
 
     public Node(long value) {
         this.value = value;
+        this.state = 'P';
     }
 
     public Node getNext() {
@@ -23,32 +24,24 @@ public class Node {
         return value;
     }
 
-    public void setValue(char value) {
+    public void setValue(int value) {
         this.value = value;
     }
 
-    public char isState() {
+    public long getPointer() {
+        return pointer;
+    }
+
+    public void setPointer(long pointer) {
+        this.pointer = pointer;
+    }
+
+    public char getState() {
         return state;
     }
 
     public void setState(char state) {
         this.state = state;
-    }
-
-    public void setValue(int value) {
-        this.value = value;
-    }
-
-    public int getPonteiro() {
-        return ponteiro;
-    }
-
-    public void setPonteiro(int processNumber) {
-        this.ponteiro = processNumber;
-    }
-
-    public char getState() {
-        return state;
     }
 
     public void setValue(long value) {
